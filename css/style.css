@@ -510,6 +510,14 @@ body.dark-theme .book-info {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4));
 }
 
+.play-count {
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: right;
+  padding: 2px 4px 8px;
+  font-family: var(--font-mono);
+}
+
 body.dark-theme .control-panel {
   background: linear-gradient(180deg, rgba(26, 33, 40, 0.92), rgba(18, 24, 30, 0.78));
 }

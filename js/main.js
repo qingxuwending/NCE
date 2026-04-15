@@ -8,6 +8,7 @@
 const DEFAULT_BOOK_KEY = 'NCE1';
 const PLAY_MODE_STORAGE_KEY = 'playMode';
 const BOOK_SELECTION_STORAGE_KEY = 'selectedBookKey';
+const PLAY_COUNT_STORAGE_PREFIX = 'audioPlayCount';
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -30,7 +31,8 @@ class ReadingSystem {
       translationMode: 'show',
       availableSpeeds: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
       savedPlayTime: 0,
-      isProgressDragging: false
+      isProgressDragging: false,
+      currentUnitPlayCount: 0
     };
 
     this.dom = {
@@ -52,7 +54,8 @@ class ReadingSystem {
       bookSelects: qsa('.book-select'),
       prevUnitBtn: qs('#prevUnitBtn'),
       nextUnitBtn: qs('#nextUnitBtn'),
-      toggleTranslationBtn: qs('#toggleTranslationBtn')
+      toggleTranslationBtn: qs('#toggleTranslationBtn'),
+      playCount: qs('#playCount')
     };
 
     this.lyricLineEls = [];
@@ -251,6 +254,7 @@ class ReadingSystem {
     if (!unit) return;
 
     this.resetPlayer();
+    this.loadUnitPlayCount();
     this.updateActiveUnit(unitIndex, { shouldScrollUnitIntoView });
     this.updateNavigationButtons();
 
@@ -539,9 +543,43 @@ class ReadingSystem {
   }
 
   handleAudioEnded() {
+    this.incrementPlayCount();
     if (this.state.playMode === 'continuous') {
       this.playNextLyric();
     }
+  }
+
+  getPlayCountStorageKey() {
+    if (!this.state.bookPath || this.state.currentUnitIndex < 0) return '';
+    return `${PLAY_COUNT_STORAGE_PREFIX}/${this.state.bookPath}/${this.state.currentUnitIndex}`;
+  }
+
+  loadUnitPlayCount() {
+    const storageKey = this.getPlayCountStorageKey();
+    if (!storageKey) {
+      this.state.currentUnitPlayCount = 0;
+      this.updatePlayCountUI();
+      return;
+    }
+
+    const storedCount = localStorage.getItem(storageKey);
+    const parsed = parseInt(storedCount, 10);
+    this.state.currentUnitPlayCount = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    this.updatePlayCountUI();
+  }
+
+  incrementPlayCount() {
+    const storageKey = this.getPlayCountStorageKey();
+    if (!storageKey) return;
+
+    this.state.currentUnitPlayCount += 1;
+    localStorage.setItem(storageKey, `${this.state.currentUnitPlayCount}`);
+    this.updatePlayCountUI();
+  }
+
+  updatePlayCountUI() {
+    if (!this.dom.playCount) return;
+    this.dom.playCount.textContent = `播放次数：${this.state.currentUnitPlayCount}`;
   }
 
   playNextLyric() {
